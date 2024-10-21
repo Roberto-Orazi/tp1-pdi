@@ -6,11 +6,15 @@
 ```bash
 python3 -m venv tp-pdi
 ```
-2. Instalar las librerias corriendo el archivo requirements.txt
+2. Activamos el entorno virtual
+```bash
+source tp-pdi/bin/activate
+```
+3. Instalar las librerias corriendo el archivo requirements.txt
 ```bash
 pip install -r requirements.txt
 ```
-3. Para usar tkinter, instala el paquete python3-tk con el siguiente comando:
+4. Para usar tkinter, instala el paquete python3-tk con el siguiente comando:
 ```bash
 sudo apt-get install python3-tk
 ```
