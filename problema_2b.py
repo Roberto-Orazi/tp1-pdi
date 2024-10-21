@@ -39,45 +39,6 @@ def remove_text_labels(region):
     return region
 
 
-# Función para extraer los valores de los campos después de eliminar el subrayado
-def extract_field_value(region):
-    if region is None or region.size == 0:
-        return ""
-
-    inverted_region = cv2.bitwise_not(region)
-    _, thresh_region = cv2.threshold(inverted_region, 127, 255, cv2.THRESH_BINARY)
-    thresh_region = thresh_region.astype("uint8")
-
-    plt.imshow(thresh_region, cmap="gray")
-    plt.axis("off")
-    plt.show()
-
-    text_representation = np.array2string(thresh_region, separator="")
-    text_representation = re.sub(r"[^\w/\s]", "", text_representation)
-    cleaned_text = re.sub(r"\s+", " ", text_representation).strip()
-
-    return cleaned_text
-
-
-# Función para validar los valores extraídos de los campos del encabezado
-def validate_field_values(name, date, class_):
-    name_ok = (
-        "OK"
-        if len(re.findall(r"\w+", str(name))) >= 2 and len(str(name)) <= 25
-        else "MAL"
-    )
-    date_ok = (
-        "OK"
-        if len(str(date)) == 8 and re.match(r"\d{2}/\d{2}/\d{2}", str(date))
-        else "MAL"
-    )
-    class_ok = "OK" if len(str(class_)) == 1 else "MAL"
-
-    print(f"Name: {name_ok}")
-    print(f"Date: {date_ok}")
-    print(f"Class: {class_ok}")
-
-
 # Función para encontrar la región del encabezado
 def find_header_region(img):
     header_height = int(img.shape[0] * 0.15)
@@ -128,13 +89,93 @@ def remove_underline(region):
     return region
 
 
+def correct_data(region_date):
+
+    num_labels, labels_im, stats, centroids = cv2.connectedComponentsWithStats(
+        region_date
+    )
+
+    output = cv2.cvtColor(region_date, cv2.COLOR_GRAY2BGR)
+    for i in range(1, num_labels):
+        x, y, w, h, area = stats[i]
+        cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 1)
+
+    """    plt.figure(2)
+    plt.imshow(output) plt.title("Componentes Conectados (Palabras Detectadas)") plt.show()"""
+
+    letter_count = 0
+    for i in range(1, num_labels):
+        letter_count += 1
+
+    cont = 0
+    word_count = 1
+    for i in range(1, num_labels):
+        x, y, w, h, area = stats[i]
+        aux = x
+        if i == 1:
+            cont = aux
+        else:
+            pixel = aux - cont
+            cont = aux
+            if pixel >= 16:
+                word_count += 1
+    return letter_count == 8 and word_count == 1
+
+
+def correct_class(region_class):
+
+    num_labels, labels_im, stats, centroids = cv2.connectedComponentsWithStats(
+        region_class
+    )
+
+    output = cv2.cvtColor(region_class, cv2.COLOR_GRAY2BGR)
+    for i in range(1, num_labels):
+        x, y, w, h, area = stats[i]
+        cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 1)
+    """    plt.figure(2)
+    plt.imshow(output) plt.title("Componentes Conectados (Palabras Detectadas)") plt.show()"""
+    letter_count = 0
+    for i in range(1, num_labels):
+        letter_count += 1
+
+    return letter_count == 1
+
+
+def correct_name(region_name):
+    num_labels, labels_im, stats, centroids = cv2.connectedComponentsWithStats(
+        region_name
+    )
+
+    # Mostrar los componentes conectados
+    output = cv2.cvtColor(region_name, cv2.COLOR_GRAY2BGR)
+    for i in range(1, num_labels):
+        x, y, w, h, area = stats[i]
+        cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 1)
+
+    """    plt.figure(2)
+    plt.imshow(output) plt.title("Componentes Conectados (Palabras Detectadas)") plt.show()"""
+
+    cont = 0
+    word_count = 1
+    for i in range(1, num_labels):
+        x, y, w, h, area = stats[i]
+        aux = x
+        if i == 1:
+            cont = aux
+        else:
+            pixel = aux - cont
+            cont = aux
+            if pixel >= 16:
+                word_count += 1
+    return word_count == 2
+
+
 # Cargamos las imágenes de examen
 examen_1 = cv2.imread("examen_1.png", cv2.IMREAD_GRAYSCALE)
 examen_2 = cv2.imread("examen_2.png", cv2.IMREAD_GRAYSCALE)
 examen_3 = cv2.imread("examen_3.png", cv2.IMREAD_GRAYSCALE)
 examen_4 = cv2.imread("examen_4.png", cv2.IMREAD_GRAYSCALE)
 examen_5 = cv2.imread("examen_5.png", cv2.IMREAD_GRAYSCALE)
-
 examenes = [examen_1, examen_2, examen_3, examen_4, examen_5]
 
 for i, examen in enumerate(examenes, start=1):
@@ -144,10 +185,23 @@ for i, examen in enumerate(examenes, start=1):
 
     region_name, region_date, region_class = segment_header(binary_header)
 
-    print(f"Examen {i}:")
-    extracted_name = extract_field_value(region_name)
-    extracted_date = extract_field_value(region_date)
-    extracted_class = extract_field_value(region_class)
+    nom = correct_name(region_name)
+    date = correct_data(region_date)
+    clas = correct_class(region_class)
 
-    validate_field_values(extracted_name, extracted_date, extracted_class)
-    print("\n")
+    print(f"Examen numero {i}")
+
+    if nom:
+        print(f"Name: OK")
+    else:
+        print(f"Name: MAL")
+
+    if date:
+        print(f"Date: OK")
+    else:
+        print(f"Date: MAL")
+
+    if clas:
+        print(f"Class: OK")
+    else:
+        print(f"Class: MAL")

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Cargamos las respuestas Correctas del examen
+# cargamos las respuestas de las fotos
 respuesta_correcta = ["B", "A", "B", "D", "D", "C", "B", "A", "D", "B"]
 
 
@@ -17,11 +17,10 @@ def preprocess_image(img):
 
 # Cargar las imágenes
 examenes = [
-    cv2.imread("examen_1.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("examen_2.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("examen_3.png", cv2.IMREAD_GRAYSCALE),
+    # cv2.imread("examen_1.png", cv2.IMREAD_GRAYSCALE), cv2.imread("examen_2.png", cv2.IMREAD_GRAYSCALE),
+    # cv2.imread("examen_3.png", cv2.IMREAD_GRAYSCALE),
     cv2.imread("examen_4.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("examen_5.png", cv2.IMREAD_GRAYSCALE),
+    # cv2.imread("examen_5.png", cv2.IMREAD_GRAYSCALE),
 ]
 
 # Procesamos todas las imágenes
@@ -37,7 +36,7 @@ for examen_idx, img in enumerate(examenes):
     # Ordenamos los contornos por área (de mayor a menor)
     contours = sorted(contours, key=lambda c: cv2.contourArea(c), reverse=True)
 
-    # Nos aseguramos de que se detectaron suficientes contornos
+    # Asegurarse de que se detectaron suficientes contornos
     if len(contours) < 2:
         print(f"No se encontraron suficientes contornos en el Examen {examen_idx + 1}.")
         continue
@@ -50,11 +49,9 @@ for examen_idx, img in enumerate(examenes):
         segmented_images.append(segmented_img)
 
         # Mostrar cada mitad segmentada con título del Examen
-        plt.subplot(1, 2, i + 1)
-        h = plt.imshow(segmented_img, cmap="gray", vmin=0, vmax=255)
-        plt.title(f"Examen {examen_idx, i+1}")
-        plt.axis("off")
-        plt.colorbar(h)
+        """        plt.subplot(1, 2, i + 1) 
+        h = plt.imshow(segmented_img, cmap="gray", vmin=0, vmax=255) plt.title(f"Examen {examen_idx, i+1}")
+        plt.axis("off") plt.colorbar(h)"""
 
     plt.show()
 
@@ -69,15 +66,15 @@ for examen_idx, img in enumerate(examenes):
             # Extraemos cada fila
             question_segment = segmented_img[i * step : (i + 1) * step, :]
             height, width = question_segment.shape
-            segmentadox2 = question_segment[10 : height - 10, 10 : width - 10]
+            segmentadox2 = question_segment[5 : height - 10, 10 : width - 10]
             preguntas_segmentadas.append(segmentadox2)
+            """            plt.imshow(segmentadox2, cmap="gray", vmin=0, vmax=255)
+            plt.show()"""
             # Mostrar cada segmento de pregunta con título del Examen y la Pregunta
 
-            plt.subplot(5, 2, i * 2 + (idx + 1))
-            h = plt.imshow(segmentadox2, cmap="gray", vmin=0, vmax=255)
-            plt.title(f"Examen {examen_idx + 1} - Pregunta {i + 1 + (idx * 5)}")
-            plt.axis("off")
-            plt.colorbar(h)
+            """            plt.subplot(5, 2, i * 2 + (idx + 1))
+            h = plt.imshow(segmentadox2, cmap="gray", vmin=0, vmax=255) plt.title(f"Examen {examen_idx + 1} - Pregunta
+            {i + 1 + (idx * 5)}") plt.axis("off") plt.colorbar(h)"""
 
     plt.show()
 
@@ -94,7 +91,6 @@ for idx, question_img in enumerate(preguntas_segmentadas):
     # Si se encuentran líneas, procesarlas
     if lines is not None:
         for line in lines:
-            print(line)
             x1, y1, x2, y2 = line[0]
             # Calcular la posición y de la línea media
             line_y = (y1 + y2) // 2
@@ -105,7 +101,7 @@ for idx, question_img in enumerate(preguntas_segmentadas):
             )  # Dos pixeles hacia arriba de la línea
 
             # Recortar la imagen
-            cropped_question = question_img[top:bottom, x1 : x2 + 10]
+            cropped_question = question_img[top:bottom, x1 : x2 + 15]
             renglones.append(cropped_question)
             # Mostrar la pregunta recortada
 
@@ -114,7 +110,6 @@ for idx, question_img in enumerate(preguntas_segmentadas):
             plt.title(f"Recorte Examen {examen_idx + 1} - Pregunta {idx + 1}")
             plt.axis("off")
             plt.show()
-
     else:
         print(
             f"No se encontraron líneas en la Pregunta {idx + 1} del Examen {examen_idx + 1}."
@@ -135,8 +130,8 @@ def preprocess_image(img):
 
 # Función para detectar la letra basada en los contornos y segmentos
 def detectar_respuesta(renglon_img):
+    # Preprocesar la imagen
     binaria = preprocess_image(renglon_img)
-
     # Comprobar si hay píxeles blancos (potencial marca)
     if cv2.countNonZero(binaria) == 0:
         return "Sin respuesta"
@@ -152,7 +147,6 @@ def detectar_respuesta(renglon_img):
         # Verificar si el contorno es un hijo (hueco interno)
         if jerarquia[0][i][3] != -1:
             huecos += 1
-
     # Analizar según el número de huecos
     if contar_segmentos(binaria) == 1:
         return "A"
@@ -172,9 +166,11 @@ def detectar_respuesta(renglon_img):
 def contar_segmentos(img_binaria):
     # Detectar líneas horizontales que atraviesen la imagen
     altura, ancho = img_binaria.shape
-    print(altura)
+    # print(altura)
     segmentaciones = []
-    for y in range(0, altura, altura // 10):
+    for y in range(
+        0, altura, altura // 10
+    ):  # Dividir la imagen en 10 secciones horizontales
         linea = img_binaria[y : y + 1, :]  # Tomar una fila de píxeles
         if (
             cv2.countNonZero(linea) > 4
@@ -185,10 +181,11 @@ def contar_segmentos(img_binaria):
 
 # Evaluar las respuestas de una lista de imágenes de renglones
 respuestas_detectadas = []
+
 for idx, renglon in enumerate(renglones):
     letra_marcada = detectar_respuesta(renglon)
-    print(letra_marcada)
     respuestas_detectadas.append(letra_marcada)
+    # Mostrar el resultado
     if letra_marcada == respuesta_correcta[idx]:
         print(f"Pregunta {idx + 1}: OK")
     else:
