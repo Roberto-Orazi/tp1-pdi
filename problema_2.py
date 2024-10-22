@@ -177,7 +177,7 @@ examen_3 = cv2.imread("examen_3.png", cv2.IMREAD_GRAYSCALE)
 examen_4 = cv2.imread("examen_4.png", cv2.IMREAD_GRAYSCALE)
 examen_5 = cv2.imread("examen_5.png", cv2.IMREAD_GRAYSCALE)
 examenes = [examen_1, examen_2, examen_3, examen_4, examen_5]
-nom_examen = []
+exam_name = []
 for i, examen in enumerate(examenes, start=1):
     header_image = find_header_region(examen)
 
@@ -185,7 +185,7 @@ for i, examen in enumerate(examenes, start=1):
 
     region_name, region_date, region_class = segment_header(binary_header)
 
-    nom_examen.append([i, region_name])
+    exam_name.append([i, region_name])
 
     nom = correct_name(region_name)
     date = correct_date(region_date)
@@ -246,11 +246,11 @@ def detect_answer(renglon_img):
         if jerarquia[0][i][3] != -1:
             huecos += 1
     # Analizar según el número de huecos
-    if count_segments(binaria) == 1:
+    if segments_count(binaria) == 1:
         return "A"
-    elif count_segments(binaria) == 2:
+    elif segments_count(binaria) == 2:
         return "D"
-    elif count_segments(binaria) == 3:
+    elif segments_count(binaria) == 3:
         return "B"
     elif huecos == 0:
         # Si no hay huecos pero hay píxeles, es C
@@ -261,19 +261,19 @@ def detect_answer(renglon_img):
 
 
 # Función para contar segmentos horizontales en una imagen binaria
-def count_segments(img_binaria):
+def segments_count(img_binaria):
     # Detectar líneas horizontales que atraviesen la imagen
-    altura, ancho = img_binaria.shape
-    segmentaciones = []
+    height, ancho = img_binaria.shape
+    segmentations = []
     for y in range(
-        0, altura, altura // 10
+        0, height, height // 10
     ):  # Dividir la imagen en 10 secciones horizontales
-        linea = img_binaria[y : y + 1, :]  # Tomar una fila de píxeles
+        line = img_binaria[y : y + 1, :]  # Tomar una fila de píxeles
         if (
-            cv2.countNonZero(linea) > 4
+            cv2.countNonZero(line) > 4
         ):  # Si hay píxeles blancos, cuenta como un segmento
-            segmentaciones.append(linea)
-    return len(segmentaciones)
+            segmentations.append(line)
+    return len(segmentations)
 
 
 # Cargar las imágenes
@@ -288,7 +288,7 @@ examenes = [
 # Procesamos todas las imágenes
 respuestas_final = {}
 
-for examen_idx, img in enumerate(examenes):
+for exam_idx, img in enumerate(examenes):
     # print(f"\nProcesando Examen {examen_idx + 1}:")
 
     # Preprocesamos la imagen
@@ -302,7 +302,7 @@ for examen_idx, img in enumerate(examenes):
 
     # Asegurarse de que se detectaron suficientes contornos
     if len(contours) < 2:
-        print(f"No se encontraron suficientes contornos en el Examen {examen_idx + 1}.")
+        print(f"No se encontraron suficientes contornos en el Examen {exam_idx + 1}.")
         continue
 
     # Extraer las 2 mitades
@@ -313,22 +313,22 @@ for examen_idx, img in enumerate(examenes):
         segmented_images.append(segmented_img)
 
     # Segmentación de las preguntas
-    preguntas_segmentadas = []
+    segmented_questions = []
     for idx, segmented_img in enumerate(segmented_images):
         height = segmented_img.shape[0]
         step = height // 5
 
-        print(f"\nSegmentando Examen {examen_idx + 1} - Mitad {idx + 1}:")
+        print(f"\nSegmentando Examen {exam_idx + 1} - Mitad {idx + 1}:")
         for i in range(5):
 
-            question_segment = segmented_img[i * step : (i + 1) * step, :]
-            height, width = question_segment.shape
-            segmentadox2 = question_segment[5 : height - 10, 10 : width - 10]
-            preguntas_segmentadas.append(segmentadox2)
+            segment_question = segmented_img[i * step : (i + 1) * step, :]
+            height, width = segment_question.shape
+            doble_segment = segment_question[5 : height - 10, 10 : width - 10]
+            segmented_questions.append(doble_segment)
 
     # Localizar líneas y recortar
     renglones = []
-    for idx, question_img in enumerate(preguntas_segmentadas):
+    for idx, question_img in enumerate(segmented_questions):
         # Convertir la imagen a binaria
         question_thresh = preprocess_image(question_img)
 
@@ -353,7 +353,7 @@ for examen_idx, img in enumerate(examenes):
                 renglones.append(cropped_question)
         else:
             print(
-                f"No se encontraron líneas en la Pregunta {idx + 1} del Examen {examen_idx + 1}."
+                f"No se encontraron líneas en la Pregunta {idx + 1} del Examen {exam_idx + 1}."
             )
 
     # Evaluar las respuestas de una lista de imágenes de renglones
@@ -369,72 +369,70 @@ for examen_idx, img in enumerate(examenes):
         else:
             res_OK_MAL.append("MAL")
 
-    respuestas_final[examen_idx + 1] = res_OK_MAL
+    respuestas_final[exam_idx + 1] = res_OK_MAL
 
-aprobo = {}
-desaprobo = {}
+approved = {}
+rejected = {}
 for i in range(1, 6):
     nota = 0
     for j in respuestas_final[i]:
         if j == "OK":
             nota += 1
     if nota >= 6:
-        aprobo[i] = nota
+        approved[i] = nota
     else:
-        desaprobo[i] = nota
+        rejected[i] = nota
 
 
 # nombres de los examenes
-nom_examen
+exam_name
 
 # notas de los examenes
-aprobo
-desaprobo
+approved
+rejected
 
 # Creamos una lista de resultados combinada con aprobados y desaprobados
-resultados = []
-for num_examen, nombre in nom_examen:
+results = []
+for exam_number, name in exam_name:
     nota = None
     estado = None
 
     # Buscar la nota en el diccionario de aprobados
-    if num_examen in aprobo:
-        nota = aprobo[num_examen]
+    if exam_number in approved:
+        nota = approved[exam_number]
         estado = "Aprobado"
     # Buscar la nota en el diccionario de desaprobados
-    elif num_examen in desaprobo:
-        nota = desaprobo[num_examen]
+    elif exam_number in rejected:
+        nota = rejected[exam_number]
         estado = "Desaprobado"
 
     # Añadir el resultado a la lista final
-    resultados.append((nombre, num_examen, nota, estado))
+    results.append((name, exam_number, nota, estado))
 
 
 # Función para generar la imagen de resultados
-def generate_result_image(resultados, output_filename="resultados_examenes.png"):
+def generate_result_image(results, output_filename="resultados_examenes.png"):
     # Definir las dimensiones de cada bloque de nombre
     block_height, block_width = 110, 310  # Ajustar dimensiones para incluir el borde
 
     # Crear una imagen en blanco para almacenar todos los nombres
-    resultados_img_height = block_height * len(resultados)
-    resultados_img = (
-        np.ones((resultados_img_height, block_width, 3), dtype=np.uint8) * 255
-    )
+    img_results_height = block_height * len(results)
+    img_results = np.ones((img_results_height, block_width, 3), dtype=np.uint8) * 255
 
     # Colores para diferenciar aprobados y desaprobados
-    color_aprobado = (0, 255, 0)  # Verde
-    color_desaprobado = (0, 0, 255)  # Rojo
+    approved_color = (0, 255, 0)  # Verde
+    rejected_color = (0, 0, 255)  # Rojo
 
     # Iterar sobre cada resultado y agregarlo a la imagen
-    for idx, (nombre, num_examen, _, estado) in enumerate(resultados):
+    for idx, (name, exam_number, _, estado) in enumerate(results):
         # Extraer la imagen del nombre (crop)
-        region_name = cv2.cvtColor(nom_examen[num_examen - 1][1], cv2.COLOR_GRAY2BGR)
+        region_name = cv2.cvtColor(exam_name[exam_number - 1][1], cv2.COLOR_GRAY2BGR)
 
         # Redimensionar el nombre para que coincida con el bloque de la imagen de salida
         resized_name = cv2.resize(region_name, (block_width - 10, block_height - 10))
 
         # Determinar el color del borde según el estado (aprobado/desaprobado)
-        color = color_aprobado if estado == "Aprobado" else color_desaprobado
+        color = approved_color if estado == "Aprobado" else rejected_color
 
         # Dibujar un borde alrededor del bloque de nombre
         bordered_name = cv2.copyMakeBorder(
@@ -446,12 +444,12 @@ def generate_result_image(resultados, output_filename="resultados_examenes.png")
         y_end = y_start + block_height
 
         # Agregar el bloque de nombre a la imagen de resultados
-        resultados_img[y_start:y_end, :] = bordered_name
+        img_results[y_start:y_end, :] = bordered_name
 
     # Guardar la imagen de resultados
-    cv2.imwrite(output_filename, resultados_img)
+    cv2.imwrite(output_filename, img_results)
     print(f"Imagen de resultados guardada como {output_filename}")
 
 
 # Llamar a la función para generar la imagen de resultados
-generate_result_image(resultados)
+generate_result_image(results)
