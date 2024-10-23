@@ -100,8 +100,10 @@ def correct_data(region_date):
         x, y, w, h, area = stats[i]
         cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-    """    plt.figure(2)
-    plt.imshow(output) plt.title("Componentes Conectados (Palabras Detectadas)") plt.show()"""
+    plt.figure(2)
+    plt.imshow(output)
+    plt.title("Componentes Conectados (Palabras Detectadas)")
+    plt.show()
 
     letter_count = 0
     for i in range(1, num_labels):
@@ -152,8 +154,10 @@ def correct_name(region_name):
         x, y, w, h, area = stats[i]
         cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-    """    plt.figure(2)
-    plt.imshow(output) plt.title("Componentes Conectados (Palabras Detectadas)") plt.show()"""
+    plt.figure(2)
+    plt.imshow(output)
+    plt.title("Componentes Conectados (Palabras Detectadas)")
+    plt.show()
 
     cont = 0
     word_count = 1

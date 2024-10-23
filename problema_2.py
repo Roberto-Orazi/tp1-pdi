@@ -83,7 +83,9 @@ def remove_underline(region):
     )
 
     if contours:
-        underline_y = min([cv2.boundingRect(contour)[1] for contour in contours])
+        underline_y = min(
+            [cv2.boundingRect(contour)[1] for contour in contours]
+        )  # contour 1 = coordenada de y
         return region[:underline_y, :]
 
     return region
@@ -178,6 +180,7 @@ examen_4 = cv2.imread("examen_4.png", cv2.IMREAD_GRAYSCALE)
 examen_5 = cv2.imread("examen_5.png", cv2.IMREAD_GRAYSCALE)
 examenes = [examen_1, examen_2, examen_3, examen_4, examen_5]
 exam_name = []
+
 for i, examen in enumerate(examenes, start=1):
     header_image = find_header_region(examen)
 
@@ -187,13 +190,13 @@ for i, examen in enumerate(examenes, start=1):
 
     exam_name.append([i, region_name])
 
-    nom = correct_name(region_name)
+    name = correct_name(region_name)
     date = correct_date(region_date)
     clas = correct_class(region_class)
 
     print(f"Examen numero {i}")
 
-    if nom:
+    if name:
         print(f"Name: OK")
     else:
         print(f"Name: MAL")
@@ -319,8 +322,8 @@ for exam_idx, img in enumerate(examenes):
         step = height // 5
 
         print(f"\nSegmentando Examen {exam_idx + 1} - Mitad {idx + 1}:")
-        for i in range(5):
 
+        for i in range(5):
             segment_question = segmented_img[i * step : (i + 1) * step, :]
             height, width = segment_question.shape
             doble_segment = segment_question[5 : height - 10, 10 : width - 10]
@@ -413,7 +416,7 @@ for exam_number, name in exam_name:
 # Función para generar la imagen de resultados
 def generate_result_image(results, output_filename="resultados_examenes.png"):
     # Definir las dimensiones de cada bloque de nombre
-    block_height, block_width = 110, 310  # Ajustar dimensiones para incluir el borde
+    block_height, block_width = 110, 310
 
     # Crear una imagen en blanco para almacenar todos los nombres
     img_results_height = block_height * len(results)

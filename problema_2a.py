@@ -116,18 +116,6 @@ for idx, question_img in enumerate(preguntas_segmentadas):
         )
 
 
-def preprocess_image(img):
-    # Verificar si la imagen ya está en escala de grises
-    if len(img.shape) == 3:  # Si tiene 3 dimensiones, entonces es una imagen en BGR
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    else:
-        gray = img  # Ya está en escala de grises
-
-    # Binarizar la imagen (umbral adaptativo si hay variaciones de iluminación)
-    _, binaria = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
-    return binaria
-
-
 # Función para detectar la letra basada en los contornos y segmentos
 def detectar_respuesta(renglon_img):
     # Preprocesar la imagen
